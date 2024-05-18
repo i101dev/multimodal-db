@@ -8,7 +8,7 @@ import (
 
 	"github.com/joho/godotenv"
 
-	"github.com/i101dev/multimodal-db/handlers"
+	"github.com/i101dev/multimodal-db/routes"
 )
 
 func init() {
@@ -29,8 +29,8 @@ func main() {
 	// Server Setup
 	//
 
-	handlers.RegisterTestRoutes()
-	handlers.RegisterUserRoutes()
+	routes.RegisterTestRoutes()
+	routes.RegisterUserRoutes()
 
 	srv := &http.Server{
 		Handler: http.DefaultServeMux,
