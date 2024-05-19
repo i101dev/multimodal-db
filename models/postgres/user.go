@@ -83,11 +83,9 @@ func ConnectDB() {
 
 func CreateUser(r *http.Request) (*User, error) {
 
-	requestBody, userData, err := userData_byName(r)
+	requestBody, userData, _ := userData_byName(r)
 
-	if err != nil {
-		return nil, err
-	} else if userData != nil {
+	if userData != nil {
 		return nil, fmt.Errorf("name already in play")
 	}
 
@@ -143,6 +141,7 @@ func FindUserByID(r *http.Request) (*User, error) {
 func UpdateUser(r *http.Request) (*User, error) {
 
 	requestBody, userData, err := userData_byUUID(r)
+
 	if err != nil {
 		return nil, err
 	}
@@ -185,7 +184,7 @@ func DeleteUser(r *http.Request) error {
 
 func userData_byUUID(r *http.Request) (*User, *User, error) {
 
-	var requestBody *User
+	var requestBody User
 
 	if err := util.ParseBody(r, &requestBody); err != nil {
 		return nil, nil, err
@@ -199,17 +198,17 @@ func userData_byUUID(r *http.Request) (*User, *User, error) {
 
 	if err := db.Where("uuid = ?", requestBody.UUID).First(userData).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
-			return nil, nil, fmt.Errorf("user not found")
+			return &requestBody, nil, fmt.Errorf("user not found")
 		}
 		return nil, nil, fmt.Errorf("error retrieving user: %w", err)
 	}
 
-	return requestBody, userData, nil
+	return &requestBody, userData, nil
 }
 
 func userData_byName(r *http.Request) (*User, *User, error) {
 
-	var requestBody *User
+	var requestBody User
 
 	if err := util.ParseBody(r, &requestBody); err != nil {
 		return nil, nil, err
@@ -223,10 +222,10 @@ func userData_byName(r *http.Request) (*User, *User, error) {
 
 	if err := db.Where("name = ?", requestBody.Name).First(userData).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
-			return nil, nil, fmt.Errorf("user not found")
+			return &requestBody, nil, fmt.Errorf("user not found")
 		}
 		return nil, nil, fmt.Errorf("error retrieving user: %w", err)
 	}
 
-	return requestBody, userData, nil
+	return &requestBody, userData, nil
 }

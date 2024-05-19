@@ -26,7 +26,7 @@ func RespondWithJSON(w http.ResponseWriter, code int, payload interface{}) {
 	data, err := json.Marshal(payload)
 
 	if err != nil {
-		fmt.Printf("failed to encode order to JSON: %+v", payload)
+		// fmt.Printf("failed to encode order to JSON: %+v", payload)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}

@@ -3,14 +3,15 @@ package routes
 import (
 	"net/http"
 
-	"github.com/i101dev/multimodal-db/models/postgres"
+	// database "github.com/i101dev/multimodal-db/models/postgres"
+	database "github.com/i101dev/multimodal-db/models/mysql"
 
 	"github.com/i101dev/multimodal-db/util"
 )
 
 func RegisterUserRoutes() {
 
-	postgres.ConnectDB()
+	database.ConnectDB()
 
 	http.HandleFunc("/users", getAll)
 	http.HandleFunc("/users/find", find)
@@ -27,7 +28,7 @@ func getAll(w http.ResponseWriter, r *http.Request) {
 
 	// -----------------------------------------------------------------
 	//
-	allUsers, err := postgres.GetAllUsers(r)
+	allUsers, err := database.GetAllUsers(r)
 	//
 	// -----------------------------------------------------------------
 
@@ -48,7 +49,7 @@ func find(w http.ResponseWriter, r *http.Request) {
 
 	// -----------------------------------------------------------------
 	//
-	newUser, err := postgres.FindUserByID(r)
+	newUser, err := database.FindUserByID(r)
 	//
 	// -----------------------------------------------------------------
 
@@ -69,7 +70,7 @@ func create(w http.ResponseWriter, r *http.Request) {
 
 	// -----------------------------------------------------------------
 	//
-	newUser, err := postgres.CreateUser(r)
+	newUser, err := database.CreateUser(r)
 	//
 	// -----------------------------------------------------------------
 
@@ -90,7 +91,7 @@ func update(w http.ResponseWriter, r *http.Request) {
 
 	// -----------------------------------------------------------------
 	//
-	newUser, err := postgres.UpdateUser(r)
+	newUser, err := database.UpdateUser(r)
 	//
 	// -----------------------------------------------------------------
 
@@ -111,7 +112,7 @@ func delete(w http.ResponseWriter, r *http.Request) {
 
 	// -----------------------------------------------------------------
 	//
-	err := postgres.DeleteUser(r)
+	err := database.DeleteUser(r)
 	//
 	// -----------------------------------------------------------------
 
