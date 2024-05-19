@@ -81,7 +81,7 @@ func ConnectDB() {
 	}
 }
 
-func CreateUser(r *http.Request) (*User, error) {
+func CreateUser(w http.ResponseWriter, r *http.Request) (*User, error) {
 
 	requestBody, userData, _ := userData_byName(r)
 
@@ -184,48 +184,48 @@ func DeleteUser(r *http.Request) error {
 
 func userData_byUUID(r *http.Request) (*User, *User, error) {
 
-	var requestBody User
+	var reqBody User
 
-	if err := util.ParseBody(r, &requestBody); err != nil {
-		return nil, nil, err
+	if err := util.ParseBody(r, &reqBody); err != nil {
+		return &reqBody, nil, err
 	}
 
-	if requestBody.UUID == "" {
-		return nil, nil, fmt.Errorf("invalid user [UUID]")
+	if reqBody.UUID == "" {
+		return &reqBody, nil, fmt.Errorf("invalid user [UUID]")
 	}
 
 	userData := &User{}
 
-	if err := db.Where("uuid = ?", requestBody.UUID).First(userData).Error; err != nil {
+	if err := db.Where("uuid = ?", reqBody.UUID).First(userData).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
-			return &requestBody, nil, fmt.Errorf("user not found")
+			return &reqBody, nil, fmt.Errorf("user not found")
 		}
-		return nil, nil, fmt.Errorf("error retrieving user: %w", err)
+		return &reqBody, nil, fmt.Errorf("error retrieving user: %w", err)
 	}
 
-	return &requestBody, userData, nil
+	return &reqBody, userData, nil
 }
 
 func userData_byName(r *http.Request) (*User, *User, error) {
 
-	var requestBody User
+	var reqBody User
 
-	if err := util.ParseBody(r, &requestBody); err != nil {
-		return nil, nil, err
+	if err := util.ParseBody(r, &reqBody); err != nil {
+		return &reqBody, nil, err
 	}
 
-	if requestBody.Name == "" {
-		return nil, nil, fmt.Errorf("invalid user [Name]")
+	if reqBody.Name == "" {
+		return &reqBody, nil, fmt.Errorf("invalid user [Name]")
 	}
 
 	userData := &User{}
 
-	if err := db.Where("name = ?", requestBody.Name).First(userData).Error; err != nil {
+	if err := db.Where("name = ?", reqBody.Name).First(userData).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
-			return &requestBody, nil, fmt.Errorf("user not found")
+			return &reqBody, nil, fmt.Errorf("user not found")
 		}
-		return nil, nil, fmt.Errorf("error retrieving user: %w", err)
+		return &reqBody, nil, fmt.Errorf("error retrieving user: %w", err)
 	}
 
-	return &requestBody, userData, nil
+	return &reqBody, userData, nil
 }

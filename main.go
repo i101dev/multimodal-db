@@ -29,6 +29,9 @@ func main() {
 	// Server Setup
 	//
 
+	fileServer := http.FileServer(http.Dir("./static"))
+	http.Handle("/", fileServer)
+
 	routes.RegisterTestRoutes()
 	routes.RegisterUserRoutes()
 

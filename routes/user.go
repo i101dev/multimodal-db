@@ -3,8 +3,8 @@ package routes
 import (
 	"net/http"
 
-	// database "github.com/i101dev/multimodal-db/models/postgres"
-	database "github.com/i101dev/multimodal-db/models/mysql"
+	database "github.com/i101dev/multimodal-db/models/postgres"
+	// database "github.com/i101dev/multimodal-db/models/mysql"
 
 	"github.com/i101dev/multimodal-db/util"
 )
@@ -18,6 +18,7 @@ func RegisterUserRoutes() {
 	http.HandleFunc("/users/create", create)
 	http.HandleFunc("/users/update", update)
 	http.HandleFunc("/users/delete", delete)
+
 }
 func getAll(w http.ResponseWriter, r *http.Request) {
 
@@ -70,7 +71,7 @@ func create(w http.ResponseWriter, r *http.Request) {
 
 	// -----------------------------------------------------------------
 	//
-	newUser, err := database.CreateUser(r)
+	newUser, err := database.CreateUser(w, r)
 	//
 	// -----------------------------------------------------------------
 
