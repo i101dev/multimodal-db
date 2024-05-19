@@ -3,8 +3,8 @@ package routes
 import (
 	"net/http"
 
-	database "github.com/i101dev/multimodal-db/models/postgres"
-	// database "github.com/i101dev/multimodal-db/models/mysql"
+	// database "github.com/i101dev/multimodal-db/models/postgres"
+	database "github.com/i101dev/multimodal-db/models/mysql"
 
 	"github.com/i101dev/multimodal-db/util"
 )
@@ -55,7 +55,7 @@ func find(w http.ResponseWriter, r *http.Request) {
 	// -----------------------------------------------------------------
 
 	if err != nil {
-		util.RespondWithError(w, 500, "Error finding user")
+		util.RespondWithError(w, 500, err.Error())
 		return
 	}
 
@@ -71,7 +71,7 @@ func create(w http.ResponseWriter, r *http.Request) {
 
 	// -----------------------------------------------------------------
 	//
-	newUser, err := database.CreateUser(w, r)
+	newUser, err := database.CreateUser(r)
 	//
 	// -----------------------------------------------------------------
 
@@ -97,7 +97,7 @@ func update(w http.ResponseWriter, r *http.Request) {
 	// -----------------------------------------------------------------
 
 	if err != nil {
-		util.RespondWithError(w, 500, "Error updating user")
+		util.RespondWithError(w, 500, err.Error())
 		return
 	}
 
@@ -118,7 +118,7 @@ func delete(w http.ResponseWriter, r *http.Request) {
 	// -----------------------------------------------------------------
 
 	if err != nil {
-		util.RespondWithError(w, 500, "Error deleting user")
+		util.RespondWithError(w, 500, err.Error())
 		return
 	}
 

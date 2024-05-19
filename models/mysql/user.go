@@ -146,6 +146,8 @@ func UpdateUser(r *http.Request) (*User, error) {
 
 	if err != nil {
 		return nil, err
+	} else if requestBody.Name == "" && requestBody.Location == "" {
+		return nil, fmt.Errorf("nothing to update")
 	}
 
 	// ----------------------------------------------
