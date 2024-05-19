@@ -12,34 +12,12 @@ func RegisterUserRoutes() {
 
 	postgres.ConnectDB()
 
-	http.HandleFunc("/user", getByID)
 	http.HandleFunc("/users", getAll)
+	http.HandleFunc("/users/find", find)
 	http.HandleFunc("/users/create", create)
 	http.HandleFunc("/users/update", update)
 	http.HandleFunc("/users/delete", delete)
 }
-
-func create(w http.ResponseWriter, r *http.Request) {
-
-	if r.Method != http.MethodPost {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
-
-	// -----------------------------------------------------------------
-	//
-	newUser, err := postgres.CreateUser(r)
-	//
-	// -----------------------------------------------------------------
-
-	if err != nil {
-		util.RespondWithError(w, 500, "Error creating user")
-		return
-	}
-
-	util.RespondWithJSON(w, 200, &newUser)
-}
-
 func getAll(w http.ResponseWriter, r *http.Request) {
 
 	if r.Method != http.MethodGet {
@@ -59,6 +37,48 @@ func getAll(w http.ResponseWriter, r *http.Request) {
 	}
 
 	util.RespondWithJSON(w, 200, &allUsers)
+}
+
+func find(w http.ResponseWriter, r *http.Request) {
+
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// -----------------------------------------------------------------
+	//
+	newUser, err := postgres.FindUserByID(r)
+	//
+	// -----------------------------------------------------------------
+
+	if err != nil {
+		util.RespondWithError(w, 500, "Error finding user")
+		return
+	}
+
+	util.RespondWithJSON(w, 200, &newUser)
+}
+
+func create(w http.ResponseWriter, r *http.Request) {
+
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// -----------------------------------------------------------------
+	//
+	newUser, err := postgres.CreateUser(r)
+	//
+	// -----------------------------------------------------------------
+
+	if err != nil {
+		util.RespondWithError(w, 500, err.Error())
+		return
+	}
+
+	util.RespondWithJSON(w, 200, &newUser)
 }
 
 func update(w http.ResponseWriter, r *http.Request) {
@@ -82,27 +102,6 @@ func update(w http.ResponseWriter, r *http.Request) {
 	util.RespondWithJSON(w, 200, &newUser)
 }
 
-func getByID(w http.ResponseWriter, r *http.Request) {
-
-	if r.Method != http.MethodPost {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
-
-	// -----------------------------------------------------------------
-	//
-	newUser, err := postgres.GetUserByID(r)
-	//
-	// -----------------------------------------------------------------
-
-	if err != nil {
-		util.RespondWithError(w, 500, "Error finding user")
-		return
-	}
-
-	util.RespondWithJSON(w, 200, &newUser)
-}
-
 func delete(w http.ResponseWriter, r *http.Request) {
 
 	if r.Method != http.MethodDelete {
@@ -117,7 +116,7 @@ func delete(w http.ResponseWriter, r *http.Request) {
 	// -----------------------------------------------------------------
 
 	if err != nil {
-		util.RespondWithError(w, 500, "Error updating user")
+		util.RespondWithError(w, 500, "Error deleting user")
 		return
 	}
 

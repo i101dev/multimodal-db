@@ -12,6 +12,8 @@ import (
 	"github.com/google/uuid"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+
+	"github.com/i101dev/multimodal-db/util"
 )
 
 // --------------------------------------------------------------------
@@ -24,9 +26,10 @@ var db *gorm.DB
 
 type User struct {
 	gorm.Model
-	UUID   string `json:"uuid"`
-	Name   string `gorm:"uniqueIndex" json:"name"`
-	Skills Skills `gorm:"type:jsonb" json:"skills"`
+	UUID     string `json:"uuid"`
+	Name     string `gorm:"uniqueIndex" json:"name"`
+	Location string `json:"location"`
+	Skills   Skills `gorm:"type:jsonb" json:"skills"`
 }
 type Skills []Skill
 type Skill struct {
@@ -55,7 +58,7 @@ func ConnectDB() {
 	dbHost := os.Getenv("DB_POSTGRES_HOST")
 	dbPort := os.Getenv("DB_POSTGRES_PORT")
 
-	if dbUser == "" || dbPass == "" || dbName == "" || dbHost == "" {
+	if dbUser == "" || dbPass == "" || dbName == "" || dbHost == "" || dbPort == "" {
 		log.Fatal("incomplete database connection parameters")
 	}
 
@@ -64,41 +67,49 @@ func ConnectDB() {
 	d, err := gorm.Open(postgres.Open(connStr), &gorm.Config{})
 
 	if err != nil {
-		log.Fatal(err)
-	} else {
-		db = d
+		log.Fatal("\n*** >>> Postgres connection failed:", err)
+		return
 	}
 
+	db = d
+
+	// ----------------------------------------------------
+	// Migrations -----------------------------------------
+	//
 	if err := db.AutoMigrate(&User{}); err != nil {
-		fmt.Println("Error initializing [models/users.go]")
-		log.Fatal(err)
+		log.Fatal("Error initializing [models/users.go]:", err)
 	}
 }
 
 func CreateUser(r *http.Request) (*User, error) {
 
-	requestBody := User{
-		UUID:   uuid.New().String(),
-		Skills: []Skill{},
+	requestBody, userData, err := userData_byName(r)
+
+	if err != nil {
+		return nil, err
+	} else if userData != nil {
+		return nil, fmt.Errorf("name already in play")
 	}
 
-	decoder := json.NewDecoder(r.Body)
-	if err := decoder.Decode(&requestBody); err != nil {
-		return nil, fmt.Errorf("error parsing JSON: %w", err)
-	}
-
+	// ----------------------------------------------
+	//
 	if requestBody.Name == "" {
 		return nil, fmt.Errorf("invalid [name]")
 	}
+	if requestBody.Location == "" {
+		return nil, fmt.Errorf("invalid [location]")
+	}
+	//
+	// ----------------------------------------------
 
-	// --------------------------------------------------------------
-	// Business logic -----------------------------------------------
-	result := db.Create(&requestBody)
-	if result.Error != nil {
+	requestBody.UUID = uuid.New().String()
+	requestBody.Skills = []Skill{}
+
+	if result := db.Create(&requestBody); result.Error != nil {
 		return nil, result.Error
 	}
 
-	return &requestBody, nil
+	return requestBody, nil
 }
 
 func GetAllUsers(r *http.Request) (*[]User, error) {
@@ -118,39 +129,35 @@ func GetAllUsers(r *http.Request) (*[]User, error) {
 	return &allUsers, nil
 }
 
-func GetUserByID(r *http.Request) (*User, error) {
+func FindUserByID(r *http.Request) (*User, error) {
 
-	user, err := getUserFromUUID(r)
+	_, userData, err := userData_byUUID(r)
 
 	if err != nil {
 		return nil, err
 	}
 
-	return user, nil
+	return userData, nil
 }
 
 func UpdateUser(r *http.Request) (*User, error) {
 
-	requestBody, err := getRequestBody(r)
+	requestBody, userData, err := userData_byUUID(r)
 	if err != nil {
-		return nil, fmt.Errorf("error getting request body")
+		return nil, err
 	}
 
-	// ------------------------------------------------------------------------------
-	// Fetch user from the database -------------------------------------------------
-	userData, err := getUserData(requestBody)
-	if err != nil {
-		return nil, fmt.Errorf("error getting user data")
-	}
-
-	// --------------------------------------------------------------
-	// Update user fields -------------------------------------------
+	// ----------------------------------------------
+	//
 	if requestBody.Name != "" {
 		userData.Name = requestBody.Name
 	}
+	if requestBody.Location != "" {
+		userData.Location = requestBody.Location
+	}
+	//
+	// ----------------------------------------------
 
-	// --------------------------------------------------------------
-	// Business logic -----------------------------------------------
 	if err := db.Save(&userData).Error; err != nil {
 		return nil, fmt.Errorf("error updating user: %w", err)
 	}
@@ -160,13 +167,13 @@ func UpdateUser(r *http.Request) (*User, error) {
 
 func DeleteUser(r *http.Request) error {
 
-	user, err := getUserFromUUID(r)
+	_, userData, err := userData_byUUID(r)
 
 	if err != nil {
 		return err
 	}
 
-	if err := db.Delete(&user).Error; err != nil {
+	if err := db.Delete(&userData).Error; err != nil {
 		return fmt.Errorf("error deleting user: %w", err)
 	}
 
@@ -176,45 +183,50 @@ func DeleteUser(r *http.Request) error {
 // --------------------------------------------------------------------
 // --------------------------------------------------------------------
 
-func getRequestBody(r *http.Request) (*User, error) {
+func userData_byUUID(r *http.Request) (*User, *User, error) {
 
-	var requestBody User
+	var requestBody *User
 
-	decoder := json.NewDecoder(r.Body)
-	if err := decoder.Decode(&requestBody); err != nil {
-		return nil, fmt.Errorf("error parsing JSON: %w", err)
+	if err := util.ParseBody(r, &requestBody); err != nil {
+		return nil, nil, err
 	}
 
 	if requestBody.UUID == "" {
-		return nil, fmt.Errorf("invalid user UUID")
+		return nil, nil, fmt.Errorf("invalid user [UUID]")
 	}
 
-	return &requestBody, nil
-}
+	userData := &User{}
 
-func getUserFromUUID(r *http.Request) (*User, error) {
-
-	requestBody, err := getRequestBody(r)
-	if err != nil {
-		return nil, fmt.Errorf("error getting request body")
-	}
-
-	userData, err := getUserData(requestBody)
-	if err != nil {
-		return nil, fmt.Errorf("error getting user data")
-	}
-
-	return userData, nil
-}
-
-func getUserData(requestBody *User) (*User, error) {
-	user := User{}
-	if err := db.Where("uuid = ?", requestBody.UUID).First(&user).Error; err != nil {
+	if err := db.Where("uuid = ?", requestBody.UUID).First(userData).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
-			return nil, fmt.Errorf("user not found")
+			return nil, nil, fmt.Errorf("user not found")
 		}
-		return nil, fmt.Errorf("error retrieving user: %w", err)
+		return nil, nil, fmt.Errorf("error retrieving user: %w", err)
 	}
 
-	return &user, nil
+	return requestBody, userData, nil
+}
+
+func userData_byName(r *http.Request) (*User, *User, error) {
+
+	var requestBody *User
+
+	if err := util.ParseBody(r, &requestBody); err != nil {
+		return nil, nil, err
+	}
+
+	if requestBody.Name == "" {
+		return nil, nil, fmt.Errorf("invalid user [Name]")
+	}
+
+	userData := &User{}
+
+	if err := db.Where("name = ?", requestBody.Name).First(userData).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, nil, fmt.Errorf("user not found")
+		}
+		return nil, nil, fmt.Errorf("error retrieving user: %w", err)
+	}
+
+	return requestBody, userData, nil
 }
