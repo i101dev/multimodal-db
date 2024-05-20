@@ -13,7 +13,7 @@ func RegisterUserRoutes() {
 
 	database.ConnectDB()
 
-	http.HandleFunc("/users", getAll)
+	http.HandleFunc("/users/all", getAll)
 	http.HandleFunc("/users/find", find)
 	http.HandleFunc("/users/create", create)
 	http.HandleFunc("/users/update", update)

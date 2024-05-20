@@ -31,7 +31,9 @@ type User struct {
 	Location string `json:"location"`
 	Skills   Skills `gorm:"type:jsonb" json:"skills"`
 }
+
 type Skills []Skill
+
 type Skill struct {
 	Type  string `json:"type"`
 	Level int    `json:"level"`
@@ -40,6 +42,7 @@ type Skill struct {
 func (s Skills) Value() (driver.Value, error) {
 	return json.Marshal(s)
 }
+
 func (s *Skills) Scan(src interface{}) error {
 	if b, ok := src.([]byte); ok {
 		return json.Unmarshal(b, s)
@@ -81,7 +84,7 @@ func ConnectDB() {
 	}
 }
 
-func CreateUser(w http.ResponseWriter, r *http.Request) (*User, error) {
+func CreateUser(r *http.Request) (*User, error) {
 
 	requestBody, userData, _ := userData_byName(r)
 

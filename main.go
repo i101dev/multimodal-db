@@ -32,13 +32,14 @@ func main() {
 	fileServer := http.FileServer(http.Dir("./static"))
 	http.Handle("/", fileServer)
 
-	routes.RegisterTestRoutes()
-	routes.RegisterUserRoutes()
-
 	srv := &http.Server{
-		Handler: http.DefaultServeMux,
 		Addr:    ":" + port,
+		Handler: http.DefaultServeMux,
 	}
+
+	// routes.RegisterTestRoutes()
+	// routes.RegisterUserRoutes()
+	routes.RegisterAlertRoutes()
 
 	fmt.Println("Server is live on port:", port)
 	if err := srv.ListenAndServe(); err != nil {
