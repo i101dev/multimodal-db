@@ -1,14 +1,14 @@
 version: "3"
 
 services:
-    redis:
-        image: redis
-        env_file: .env
-        entrypoint: redis-server --appendonly yes  --requirepass ${DB_REDIS_PASSWORD}
-        ports:
-            - "6379:6379"
-        volumes:
-            - redis_data_container:/data/redis
+    # redis:
+    #     image: redis
+    #     env_file: .env
+    #     entrypoint: redis-server --appendonly yes  --requirepass ${DB_REDIS_PASSWORD}
+    #     ports:
+    #         - "6379:6379"
+    #     volumes:
+    #         - redis_data_container:/data/redis
 
     # postgres:
     #     image: postgres:latest
@@ -35,6 +35,8 @@ services:
 
 volumes:
     redis_data_container:
+        driver: local
+    badger_data_container:
         driver: local
     postgres_data_container:
         driver: local

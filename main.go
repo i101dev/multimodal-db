@@ -28,7 +28,6 @@ func main() {
 	// -----------------------------------------------------------------------
 	// Server Setup
 	//
-
 	fileServer := http.FileServer(http.Dir("./static"))
 	http.Handle("/", fileServer)
 
@@ -37,10 +36,17 @@ func main() {
 		Handler: http.DefaultServeMux,
 	}
 
+	// -----------------------------------------------------------------------
+	// Routing Setup
+	//
 	// routes.RegisterTestRoutes()
 	// routes.RegisterUserRoutes()
-	routes.RegisterAlertRoutes()
+	// routes.RegisterAlertRoutes()
+	routes.RegisterTxnRoutes()
 
+	// -----------------------------------------------------------------------
+	// Server Launch
+	//
 	fmt.Println("Server is live on port:", port)
 	if err := srv.ListenAndServe(); err != nil {
 		log.Fatal(err)
