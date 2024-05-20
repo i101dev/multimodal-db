@@ -1,42 +1,40 @@
 version: "3"
 
 services:
-    # redis:
-    #     image: redis
-    #     env_file: .env
-    #     entrypoint: redis-server --appendonly yes  --requirepass ${DB_REDIS_PASSWORD}
-    #     ports:
-    #         - "6379:6379"
-    #     volumes:
-    #         - redis_data_container:/data/redis
+    redis:
+        image: redis
+        env_file: .env
+        entrypoint: redis-server --appendonly yes  --requirepass ${DB_REDIS_PASSWORD}
+        ports:
+            - "6379:6379"
+        volumes:
+            - redis_data_container:/data/redis
 
-    # postgres:
-    #     image: postgres:latest
-    #     environment:
-    #         POSTGRES_DB: mydatabase
-    #         POSTGRES_USER: myuser
-    #         POSTGRES_PASSWORD: mypassword
-    #     volumes:
-    #         - postgres_data_container:/data/postgresql
-    #     ports:
-    #         - "5432:5432"
+    postgres:
+        image: postgres:latest
+        environment:
+            POSTGRES_DB: mydatabase
+            POSTGRES_USER: myuser
+            POSTGRES_PASSWORD: mypassword
+        volumes:
+            - postgres_data_container:/data/postgresql
+        ports:
+            - "5432:5432"
 
-    # mysql:
-    #     image: mysql:latest
-    #     environment:
-    #         MYSQL_ROOT_PASSWORD: rootpass
-    #         MYSQL_DATABASE: mydb
-    #         MYSQL_USER: user
-    #         MYSQL_PASSWORD: userpass
-    #     ports:
-    #         - "3306:3306"
-    #     volumes:
-    #         - mysql_data_container:/data/mysql
+    mysql:
+        image: mysql:latest
+        environment:
+            MYSQL_ROOT_PASSWORD: rootpass
+            MYSQL_DATABASE: mydb
+            MYSQL_USER: user
+            MYSQL_PASSWORD: userpass
+        ports:
+            - "3306:3306"
+        volumes:
+            - mysql_data_container:/data/mysql
 
 volumes:
     redis_data_container:
-        driver: local
-    badger_data_container:
         driver: local
     postgres_data_container:
         driver: local

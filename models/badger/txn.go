@@ -78,12 +78,10 @@ func CreateTxn(r *http.Request) (*Txn, error) {
 	requestBody.Timestamp = time.Now().Unix()
 
 	// -------------------------------------------------------------
-	err := badgerDB.Update(func(txn *badger.Txn) error {
+	if err := badgerDB.Update(func(txn *badger.Txn) error {
 		txn.Set([]byte(requestBody.UUID), []byte(jsonString(requestBody)))
 		return nil
-	})
-
-	if err != nil {
+	}); err != nil {
 		return nil, fmt.Errorf("failed to save transaction: %v", err)
 	}
 
@@ -94,7 +92,7 @@ func GetAllTxns(r *http.Request) (*[]Txn, error) {
 
 	var allTxns []Txn
 
-	err := badgerDB.View(func(txn *badger.Txn) error {
+	if err := badgerDB.View(func(txn *badger.Txn) error {
 
 		opts := badger.DefaultIteratorOptions
 		opts.Prefix = []byte("")
@@ -124,13 +122,13 @@ func GetAllTxns(r *http.Request) (*[]Txn, error) {
 			}
 		}
 		return nil
-	})
+		// -------------------------------------------------------------
 
-	// -------------------------------------------------------------
-	if err != nil {
+	}); err != nil {
 		return nil, fmt.Errorf("failed to fetch transactions: %v", err)
 	}
 
+	// -------------------------------------------------------------
 	if len(allTxns) == 0 {
 		return &allTxns, fmt.Errorf("no transactions yet")
 	}
@@ -154,7 +152,7 @@ func GetRecentTxns(r *http.Request) (*[]Txn, error) {
 	currentTime := time.Now().Unix()
 	cutoffTime := currentTime - requestBody.Minutes*60
 
-	err := badgerDB.View(func(txn *badger.Txn) error {
+	if err := badgerDB.View(func(txn *badger.Txn) error {
 
 		opts := badger.DefaultIteratorOptions
 		opts.PrefetchSize = 10
@@ -186,10 +184,9 @@ func GetRecentTxns(r *http.Request) (*[]Txn, error) {
 			}
 		}
 		return nil
-	})
 
-	// -------------------------------------------------------------
-	if err != nil {
+		// -------------------------------------------------------------
+	}); err != nil {
 		return nil, fmt.Errorf("failed to fetch recent transactions: %v", err)
 	}
 
