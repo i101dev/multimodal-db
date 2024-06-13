@@ -5,10 +5,14 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
+	"runtime"
+	"syscall"
 	"time"
 
 	"github.com/dgraph-io/badger/v3"
 	"github.com/google/uuid"
+	"github.com/vrecan/death"
 )
 
 // --------------------------------------------------------------------
@@ -36,27 +40,28 @@ const (
 	genesisData = "First Transaction from Genesis"
 )
 
-var (
-	badgerDB *badger.DB
-)
-
 // --------------------------------------------------------------------
 // --------------------------------------------------------------------
 
-func ConnectDB() {
+func ConnectDB() *badger.DB {
 
 	opts := badger.DefaultOptions(dbPath)
 	opts.Logger = &NullLogger{}
-
 	db, err := badger.Open(opts)
 
 	if err != nil {
 		log.Fatal("Failed to open BadgerDB:", err)
 	}
 
-	badgerDB = db
+	d := death.NewDeath(syscall.SIGINT, syscall.SIGTERM, os.Interrupt)
 
-	fmt.Println("BadgerDB connected successfully")
+	d.WaitForDeathWithFunc(func() {
+		defer os.Exit(1)
+		defer runtime.Goexit()
+		db.Close()
+	})
+
+	return db
 }
 
 func CreateTxn(r *http.Request) (*Txn, error) {
@@ -78,7 +83,10 @@ func CreateTxn(r *http.Request) (*Txn, error) {
 	requestBody.Timestamp = time.Now().Unix()
 
 	// -------------------------------------------------------------
-	if err := badgerDB.Update(func(txn *badger.Txn) error {
+	db := ConnectDB()
+	defer db.Close()
+
+	if err := db.Update(func(txn *badger.Txn) error {
 		txn.Set([]byte(requestBody.UUID), []byte(jsonString(requestBody)))
 		return nil
 	}); err != nil {
@@ -92,7 +100,10 @@ func GetAllTxns(r *http.Request) (*[]Txn, error) {
 
 	var allTxns []Txn
 
-	if err := badgerDB.View(func(txn *badger.Txn) error {
+	db := ConnectDB()
+	defer db.Close()
+
+	if err := db.View(func(txn *badger.Txn) error {
 
 		opts := badger.DefaultIteratorOptions
 		opts.Prefix = []byte("")
@@ -152,7 +163,10 @@ func GetRecentTxns(r *http.Request) (*[]Txn, error) {
 	currentTime := time.Now().Unix()
 	cutoffTime := currentTime - requestBody.Minutes*60
 
-	if err := badgerDB.View(func(txn *badger.Txn) error {
+	db := ConnectDB()
+	defer db.Close()
+
+	if err := db.View(func(txn *badger.Txn) error {
 
 		opts := badger.DefaultIteratorOptions
 		opts.PrefetchSize = 10
