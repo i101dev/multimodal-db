@@ -10,7 +10,7 @@ import (
 
 func RegisterTxnRoutes() {
 
-	database.ConnectDB()
+	// database.ConnectDB()
 
 	http.HandleFunc("/txn/create", createTxn)
 	http.HandleFunc("/txn/getall", getAllTxns)

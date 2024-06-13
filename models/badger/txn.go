@@ -5,14 +5,10 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"os"
-	"runtime"
-	"syscall"
 	"time"
 
 	"github.com/dgraph-io/badger/v3"
 	"github.com/google/uuid"
-	"github.com/vrecan/death"
 )
 
 // --------------------------------------------------------------------
@@ -53,13 +49,13 @@ func ConnectDB() *badger.DB {
 		log.Fatal("Failed to open BadgerDB:", err)
 	}
 
-	d := death.NewDeath(syscall.SIGINT, syscall.SIGTERM, os.Interrupt)
+	// d := death.NewDeath(syscall.SIGINT, syscall.SIGTERM, os.Interrupt)
 
-	d.WaitForDeathWithFunc(func() {
-		defer os.Exit(1)
-		defer runtime.Goexit()
-		db.Close()
-	})
+	// d.WaitForDeathWithFunc(func() {
+	// 	defer os.Exit(1)
+	// 	defer runtime.Goexit()
+	// 	db.Close()
+	// })
 
 	return db
 }

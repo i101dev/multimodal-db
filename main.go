@@ -39,9 +39,9 @@ func main() {
 	// -----------------------------------------------------------------------
 	// Routing Setup
 	//
-	routes.RegisterTestRoutes()
-	routes.RegisterUserRoutes()
-	routes.RegisterAlertRoutes()
+	// routes.RegisterTestRoutes()
+	// routes.RegisterUserRoutes()
+	// routes.RegisterAlertRoutes()
 	routes.RegisterTxnRoutes()
 
 	// -----------------------------------------------------------------------
