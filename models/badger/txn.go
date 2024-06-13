@@ -5,10 +5,14 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
+	"runtime"
+	"syscall"
 	"time"
 
 	"github.com/dgraph-io/badger/v3"
 	"github.com/google/uuid"
+	"github.com/vrecan/death"
 )
 
 // --------------------------------------------------------------------
@@ -38,7 +42,17 @@ const (
 
 // --------------------------------------------------------------------
 // --------------------------------------------------------------------
+func CloseDB(db *badger.DB) {
 
+	d := death.NewDeath(syscall.SIGINT, syscall.SIGTERM, os.Interrupt)
+
+	d.WaitForDeathWithFunc(func() {
+		defer os.Exit(1)
+		defer runtime.Goexit()
+		db.Close()
+		fmt.Println("BadgerDB gracefully shutdown")
+	})
+}
 func ConnectDB() *badger.DB {
 
 	opts := badger.DefaultOptions(dbPath)
@@ -49,13 +63,7 @@ func ConnectDB() *badger.DB {
 		log.Fatal("Failed to open BadgerDB:", err)
 	}
 
-	// d := death.NewDeath(syscall.SIGINT, syscall.SIGTERM, os.Interrupt)
-
-	// d.WaitForDeathWithFunc(func() {
-	// 	defer os.Exit(1)
-	// 	defer runtime.Goexit()
-	// 	db.Close()
-	// })
+	go CloseDB(db)
 
 	return db
 }
