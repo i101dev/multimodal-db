@@ -3,8 +3,8 @@ package routes
 import (
 	"net/http"
 
-	// database "github.com/i101dev/multimodal-db/models/postgres"
-	database "github.com/i101dev/multimodal-db/models/mysql"
+	database "github.com/i101dev/multimodal-db/models/postgres"
+	// database "github.com/i101dev/multimodal-db/models/mysql"
 
 	"github.com/i101dev/multimodal-db/util"
 )
@@ -18,7 +18,8 @@ func RegisterUserRoutes() {
 	http.HandleFunc("/users/create", create)
 	http.HandleFunc("/users/update", update)
 	http.HandleFunc("/users/delete", delete)
-
+	http.HandleFunc("/users/addskill", addskill)
+	http.HandleFunc("/users/removeskill", removeskill)
 }
 func getAll(w http.ResponseWriter, r *http.Request) {
 
@@ -124,4 +125,46 @@ func delete(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(200)
 	w.Write([]byte("User deleted"))
+}
+
+func addskill(w http.ResponseWriter, r *http.Request) {
+
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// -----------------------------------------------------------------
+	//
+	userDat, err := database.AddSkill(r)
+	//
+	// -----------------------------------------------------------------
+
+	if err != nil {
+		util.RespondWithError(w, 500, err.Error())
+		return
+	}
+
+	util.RespondWithJSON(w, 200, &userDat)
+}
+
+func removeskill(w http.ResponseWriter, r *http.Request) {
+
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// -----------------------------------------------------------------
+	//
+	userDat, err := database.RemoveSkill(r)
+	//
+	// -----------------------------------------------------------------
+
+	if err != nil {
+		util.RespondWithError(w, 500, err.Error())
+		return
+	}
+
+	util.RespondWithJSON(w, 200, &userDat)
 }

@@ -35,6 +35,7 @@ type User struct {
 type Skills []Skill
 
 type Skill struct {
+	UUID  string `json:"uuid"`
 	Type  string `json:"type"`
 	Level int    `json:"level"`
 }
@@ -132,13 +133,13 @@ func GetAllUsers(r *http.Request) (*[]User, error) {
 
 func FindUserByID(r *http.Request) (*User, error) {
 
-	_, userData, err := userData_byUUID(r)
+	_, userDat, err := userData_byUUID(r)
 
 	if err != nil {
 		return nil, err
 	}
 
-	return userData, nil
+	return userDat, nil
 }
 
 func UpdateUser(r *http.Request) (*User, error) {
@@ -184,6 +185,100 @@ func DeleteUser(r *http.Request) error {
 	return nil
 }
 
+func AddSkill(r *http.Request) (*User, error) {
+
+	var reqBody struct {
+		UUID  string `json:"uuid"`
+		Type  string `json:"type"`
+		Level int    `json:"level"`
+	}
+
+	// ----------------------------------------------------------------------------
+	if err := util.ParseBody(r, &reqBody); err != nil {
+		return nil, err
+	}
+	if reqBody.UUID == "" {
+		return nil, fmt.Errorf("invalid [uuid]")
+	}
+	if reqBody.Type == "" {
+		return nil, fmt.Errorf("invalid [type]")
+	}
+	if reqBody.Level < 1 {
+		return nil, fmt.Errorf("invalid [level]")
+	}
+
+	// ----------------------------------------------------------------------------
+	userDat := &User{}
+	if err := db.Where("uuid = ?", reqBody.UUID).First(userDat).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, fmt.Errorf("user not found")
+		}
+		return nil, fmt.Errorf("error retrieving user: %w", err)
+	}
+
+	// ----------------------------------------------------------------------------
+	newSkill := Skill{
+		UUID:  uuid.New().String(),
+		Type:  reqBody.Type,
+		Level: reqBody.Level,
+	}
+
+	userDat.Skills = append(userDat.Skills, newSkill)
+
+	// ----------------------------------------------------------------------------
+	if err := db.Save(&userDat).Error; err != nil {
+		return nil, fmt.Errorf("error updating user")
+	}
+
+	return userDat, nil
+}
+
+func RemoveSkill(r *http.Request) (*User, error) {
+
+	var reqBody struct {
+		UserUUID  string `json:"user_uuid"`
+		SkillUUID string `json:"skill_uuid"`
+	}
+
+	// --------------------------------------------------------------------------------
+	if err := util.ParseBody(r, &reqBody); err != nil {
+		return nil, err
+	}
+	if reqBody.UserUUID == "" {
+		return nil, fmt.Errorf("invalid user [uuid]")
+	}
+	if reqBody.SkillUUID == "" {
+		return nil, fmt.Errorf("invalid skill [uuid]")
+	}
+
+	// --------------------------------------------------------------------------------
+	userDat := &User{}
+	if err := db.Where("uuid = ?", reqBody.UserUUID).First(userDat).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, fmt.Errorf("user not found")
+		}
+		return nil, fmt.Errorf("error retrieving user: %w", err)
+	}
+
+	// --------------------------------------------------------------------------------
+	updSkills := []Skill{}
+	for _, skill := range userDat.Skills {
+		if skill.UUID != reqBody.SkillUUID {
+			updSkills = append(updSkills, skill)
+			break
+		}
+	}
+
+	userDat.Skills = updSkills
+
+	// --------------------------------------------------------------------------------
+	if err := db.Save(&userDat).Error; err != nil {
+		return nil, fmt.Errorf("error updating user: %w", err)
+	}
+
+	return userDat, nil
+}
+
 // --------------------------------------------------------------------
 // --------------------------------------------------------------------
 
@@ -207,6 +302,8 @@ func userData_byUUID(r *http.Request) (*User, *User, error) {
 		}
 		return &reqBody, nil, fmt.Errorf("error retrieving user: %w", err)
 	}
+
+	// fmt.Printf("reqBody: %+v", reqBody)
 
 	return &reqBody, userData, nil
 }

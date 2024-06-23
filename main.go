@@ -40,9 +40,9 @@ func main() {
 	// Routing Setup
 	//
 	// routes.RegisterTestRoutes()
-	// routes.RegisterUserRoutes()
+	routes.RegisterUserRoutes()
 	// routes.RegisterAlertRoutes()
-	routes.RegisterTxnRoutes()
+	// routes.RegisterTxnRoutes()
 
 	// -----------------------------------------------------------------------
 	// Server Launch
